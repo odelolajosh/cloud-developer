@@ -24,10 +24,25 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   //    4. deletes any files on the server on finish of the response
   // QUERY PARAMATERS
   //    image_url: URL of a publicly accessible image
-  // RETURNS
+  // RETURNSfil
   //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
 
   /**************************************************************************** */
+  // endpoint to filter an image from a public url.
+  app.get('/filteredimage', async (req, res) => {
+    const { image_url } = req.query;
+    if (!image_url) {
+      return res.status(422).send({ message: 'image_url is required' });
+    }
+    try {
+      const filteredpath = await filterImageFromURL(image_url)
+      res.status(200).sendFile(filteredpath, () => {
+        deleteLocalFiles([filteredpath]);
+      })
+    } catch (err) {
+      res.status(422).send({ message: 'Unable to process image' });
+    }
+  });
 
   //! END @TODO1
   
