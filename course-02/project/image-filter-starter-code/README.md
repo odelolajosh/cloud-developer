@@ -2,6 +2,11 @@
 
 Udagram is a simple cloud application developed alongside the Udacity Cloud Engineering Nanodegree. It allows users to register and log into a web client, post photos to the feed, and process photos using an image filtering microservice.
 
+# Deployment endpoint
+elastic beanstalk deployment URL - http://udagram-joshua.us-east-1.elasticbeanstalk.com/ <br>
+Test functionality with an image - [here](http://udagram-joshua.us-east-1.elasticbeanstalk.com/filteredimage?image_url=https://i.pinimg.com/564x/1e/75/9e/1e759ef3f24806931af4dde0bc270aa1.jpg)
+
+# Overview
 The project is split into three parts:
 1. [The Simple Frontend](https://github.com/udacity/cloud-developer/tree/master/course-02/exercises/udacity-c2-frontend)
 A basic Ionic client web application which consumes the RestAPI Backend. [Covered in the course]
