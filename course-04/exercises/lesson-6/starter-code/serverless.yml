@@ -1,5 +1,4 @@
-service:
-  name: serverless-udagram-app
+service: serverless-udagram-app
 
 plugins:
   - serverless-webpack
@@ -41,7 +40,7 @@ provider:
       Action:
         - codedeploy:*
       Resource:
-        - '*'
+        - "*"
     - Effect: Allow
       Action:
         - dynamodb:Scan
@@ -92,6 +91,8 @@ custom:
       port: 8000
       inMemory: true
       migrate: true
+    stages: # Add this section of the config
+      - dev
 
   documentation:
     api:
@@ -108,7 +109,6 @@ custom:
         schema: ${file(models/create-image-request.json)}
 
 functions:
-
   RS256Auth:
     handler: src/lambda/auth/rs256Auth0Authorizer.handler
 
@@ -136,7 +136,7 @@ functions:
             summary: Create a new group
             description: Create a new group
             requestModels:
-              'application/json': GroupRequest
+              "application/json": GroupRequest
     deploymentSettings:
       type: Linear10PercentEvery1Minute
       alias: Live
@@ -159,7 +159,7 @@ functions:
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.GROUPS_TABLE}
       - Effect: Allow
         Action:
-        - xray:PutTraceSegments
+          - xray:PutTraceSegments
         Resource: "*"
 
   CreateImage:
@@ -175,7 +175,7 @@ functions:
             summary: Create a new image
             description: Create a new image
             requestModels:
-              'application/json': ImageRequest
+              "application/json": ImageRequest
 
   SendUploadNotifications:
     environment:
@@ -187,7 +187,7 @@ functions:
       - sns:
           arn:
             Fn::Join:
-              - ':'
+              - ":"
               - - arn:aws:sns
                 - Ref: AWS::Region
                 - Ref: AWS::AccountId
@@ -200,7 +200,7 @@ functions:
       - sns:
           arn:
             Fn::Join:
-              - ':'
+              - ":"
               - - arn:aws:sns
                 - Ref: AWS::Region
                 - Ref: AWS::AccountId
@@ -275,8 +275,8 @@ resources:
         GlobalSecondaryIndexes:
           - IndexName: ${self:provider.environment.IMAGE_ID_INDEX}
             KeySchema:
-            - AttributeName: imageId
-              KeyType: HASH
+              - AttributeName: imageId
+                KeyType: HASH
             Projection:
               ProjectionType: ALL
 
@@ -284,12 +284,10 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
-          -
-            AttributeName: id
+          - AttributeName: id
             AttributeType: S
         KeySchema:
-          -
-            AttributeName: id
+          - AttributeName: id
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.CONNECTIONS_TABLE}
@@ -297,7 +295,7 @@ resources:
     RequestBodyValidator:
       Type: AWS::ApiGateway::RequestValidator
       Properties:
-        Name: 'request-body-validator'
+        Name: "request-body-validator"
         RestApiId:
           Ref: ApiGatewayRestApi
         ValidateRequestBody: true
@@ -314,11 +312,10 @@ resources:
               Topic: !Ref ImagesTopic
         CorsConfiguration:
           CorsRules:
-            -
-              AllowedOrigins:
-                - '*'
+            - AllowedOrigins:
+                - "*"
               AllowedHeaders:
-                - '*'
+                - "*"
               AllowedMethods:
                 - GET
                 - PUT
@@ -336,9 +333,9 @@ resources:
           Statement:
             - Sid: PublicReadForGetBucketObjects
               Effect: Allow
-              Principal: '*'
-              Action: 's3:GetObject'
-              Resource: 'arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*'
+              Principal: "*"
+              Action: "s3:GetObject"
+              Resource: "arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*"
         Bucket: !Ref AttachmentsBucket
 
     SNSTopicPolicy:
@@ -351,8 +348,7 @@ resources:
               Principal:
                 AWS: "*"
               Action: sns:Publish
-              Resource:
-                !Ref ImagesTopic
+              Resource: !Ref ImagesTopic
               Condition:
                 ArnLike:
                   AWS:SourceArn: arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}
@@ -401,7 +397,7 @@ resources:
       Properties:
         Description: KMS key to encrypt Auth0 secret
         KeyPolicy:
-          Version: '2012-10-17'
+          Version: "2012-10-17"
           Id: key-default-1
           Statement:
             - Sid: Allow administration of the key
@@ -409,13 +405,13 @@ resources:
               Principal:
                 AWS:
                   Fn::Join:
-                  - ':'
-                  - - 'arn:aws:iam:'
-                    - Ref: AWS::AccountId
-                    - 'root'
+                    - ":"
+                    - - "arn:aws:iam:"
+                      - Ref: AWS::AccountId
+                      - "root"
               Action:
-                - 'kms:*'
-              Resource: '*'
+                - "kms:*"
+              Resource: "*"
 
     KMSKeyAlias:
       Type: AWS::KMS::Alias
@@ -429,4 +425,3 @@ resources:
         Name: ${self:provider.environment.AUTH_0_SECRET_ID}
         Description: Auth0 secret
         KmsKeyId: !Ref KMSKey
-
