@@ -6,13 +6,16 @@ import { createLogger } from '../../utils/logger'
 import Axios from 'axios'
 import { Jwt } from '../../auth/Jwt'
 import { JwtPayload } from '../../auth/JwtPayload'
+import { String } from 'aws-sdk/clients/cloudwatchevents'
+// import { certToPEM } from '../../helpers/certToPEM'
+import * as jwkToPEM from 'jwk-to-pem';
 
 const logger = createLogger('auth')
 
-// TODO: Provide a URL that can be used to download a certificate that can be used
+// _TODO: Provide a URL that can be used to download a certificate that can be used
 // to verify JWT token signature.
 // To get this URL you need to go to an Auth0 page -> Show Advanced Settings -> Endpoints -> JSON Web Key Set
-const jwksUrl = '...'
+const jwksUrl = 'https://dev-o7h-6rhe.us.auth0.com/.well-known/jwks.json'
 
 export const handler = async (
   event: CustomAuthorizerEvent
@@ -20,7 +23,7 @@ export const handler = async (
   logger.info('Authorizing a user', event.authorizationToken)
   try {
     const jwtToken = await verifyToken(event.authorizationToken)
-    logger.info('User was authorized', jwtToken)
+    logger.info(`User was authorized: ${jwtToken}`)
 
     return {
       principalId: jwtToken.sub,
@@ -58,10 +61,11 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
   const token = getToken(authHeader)
   const jwt: Jwt = decode(token, { complete: true }) as Jwt
 
-  // TODO: Implement token verification
+  // _TODO: Implement token verification (done)
   // You should implement it similarly to how it was implemented for the exercise for the lesson 5
   // You can read more about how to do this here: https://auth0.com/blog/navigating-rs256-and-jwks/
-  return undefined
+  const secret = await provideSecret(jwt)
+  return verify(token, secret, { algorithms: ['RS256'] }) as JwtPayload
 }
 
 function getToken(authHeader: string): string {
@@ -74,4 +78,18 @@ function getToken(authHeader: string): string {
   const token = split[1]
 
   return token
+}
+
+async function provideSecret(jwt: Jwt): Promise<string> {
+  const { header } = jwt;
+  if (!header || header.alg !== "RS256")
+    throw new Error('Unsupported signature')
+
+  const response = await Axios(jwksUrl)
+  const jwks = response.data.keys
+  const key = jwks.find(key => key.kid === header.kid)
+  if (!key)
+    throw new Error('Invalid signature key')
+
+  return jwkToPEM(key) as String
 }
